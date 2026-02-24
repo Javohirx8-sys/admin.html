@@ -1,1 +1,0 @@
-Parkent turizm yordamchisi
