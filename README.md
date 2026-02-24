@@ -2,52 +2,84 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <title>BEK_BOLA | Admin Panel</title>
+    <title>BEK_BOLA | ADMIN PANEL (Live)</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body { font-family: sans-serif; background: #1a1a1a; color: white; padding: 20px; }
-        .alert-card { background: #2a2a2a; border-left: 10px solid #ff3b3b; padding: 20px; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
-        .btn { background: #0a5cff; color: white; padding: 12px 20px; text-decoration: none; border-radius: 8px; font-weight: bold; }
-        .btn-check { background: #2ecc71; border: none; cursor: pointer; margin-left: 10px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .alert-box { background: #1e1e1e; border-left: 8px solid #ff3b3b; margin-top: 20px; padding: 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; animation: slideIn 0.5s ease; }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        .btn-map { background: #0a5cff; color: white; padding: 12px 20px; text-decoration: none; border-radius: 8px; font-weight: bold; }
+        .btn-done { background: #2ecc71; border: none; padding: 12px 20px; color: white; border-radius: 8px; cursor: pointer; margin-left: 10px; }
+        .no-data { text-align: center; color: #555; margin-top: 50px; }
     </style>
 </head>
 <body>
-    <h1>🆘 BekBola Operativ Boshqaruv</h1>
-    <hr>
-    <div id="alerts-list">
-        </div>
+
+    <div class="header">
+        <h1>Boshqaruv Paneli (LIVE)</h1>
+        <div id="status">Tizim: <span style="color: #2ecc71;">Online ✅</span></div>
+    </div>
+
+    <div id="alerts-container">
+        <p class="no-data" id="empty-msg">Hozircha chaqiruvlar yo'q...</p>
+    </div>
 
     <script>
-        // Foydalanuvchi qismidagi bir xil config ni bu yerga ham qo'ying
-        const firebaseConfig = { ... }; 
+        // 1. BU YERGA O'ZINGNI FIREBASE CONFIGINGNI QO'Y
+        const firebaseConfig = {
+            apiKey: "AIza...",
+            authDomain: "loyiha-nomi.firebaseapp.com",
+            databaseURL: "https://loyiha-nomi-default-rtdb.firebaseio.com",
+            projectId: "loyiha-nomi",
+            storageBucket: "loyiha-nomi.appspot.com",
+            messagingSenderId: "...",
+            appId: "..."
+        };
+
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        database.ref('chaqiruvlar/').on('child_added', (snapshot) => {
+        // 2. CHAQIRUVLARNI ESHITISH
+        database.ref('chaqiruvlar/').on('value', (snapshot) => {
+            const container = document.getElementById('alerts-container');
             const data = snapshot.val();
-            const alertHtml = `
-                <div class="alert-card" id="${data.id}">
-                    <div>
-                        <h2>${data.turi}</h2>
-                        <p>ID: ${data.id} | Vaqt: ${data.vaqt}</p>
-                    </div>
-                    <div>
-                        <a href="https://www.google.com/maps?q=${data.lat},${data.lng}" target="_blank" class="btn">📍 Xaritada ko'rish</a>
-                        <button onclick="resolve('${data.id}')" class="btn btn-check">✅ Bajarildi</button>
-                    </div>
-                </div>
-            `;
-            document.getElementById('alerts-list').innerHTML = alertHtml + document.getElementById('alerts-list').innerHTML;
             
-            // Yangi xabar kelganda ovoz chiqarish
-            const audio = new Audio('https://media.geeksforgeeks.org/wp-content/uploads/20190531135120/beep.mp3');
+            if (!data) {
+                container.innerHTML = '<p class="no-data">Hozircha chaqiruvlar yo\'q...</p>';
+                return;
+            }
+
+            container.innerHTML = ''; // Tozalash
+            Object.keys(data).forEach(key => {
+                const item = data[key];
+                const card = `
+                    <div class="alert-box">
+                        <div>
+                            <h2 style="margin:0; color:#ff3b3b;">${item.turi}</h2>
+                            <p><b>ID:</b> ${item.id} | <b>Vaqt:</b> ${item.vaqt}</p>
+                            <p><b>Manzil:</b> ${item.lat.toFixed(5)}, ${item.lng.toFixed(5)}</p>
+                        </div>
+                        <div>
+                            <a href="https://www.google.com/maps?q=${item.lat},${item.lng}" target="_blank" class="btn-map">📍 Xaritada ko'rish</a>
+                            <button onclick="deleteAlert('${item.id}')" class="btn-done">Bajarildi ✅</button>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML = card + container.innerHTML;
+            });
+
+            // Yangi xabar kelganda signal berish
+            let audio = new Audio('https://media.geeksforgeeks.org/wp-content/uploads/20190531135120/beep.mp3');
             audio.play();
         });
 
-        function resolve(id) {
-            database.ref('chaqiruvlar/' + id).remove();
-            document.getElementById(id).remove();
+        // CHAQIRUVNI O'CHIRISH
+        function deleteAlert(id) {
+            if(confirm("Bu chaqiruv bajarildimi?")) {
+                database.ref('chaqiruvlar/' + id).remove();
+            }
         }
     </script>
 </body>
