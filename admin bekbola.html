@@ -2,28 +2,35 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <title>BEK BOLA | ADMIN PANEL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parkent Admin Panel</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body { font-family: sans-serif; background: #121212; color: white; padding: 20px; }
-        .card { 
-            background: #1e1e1e; border-left: 8px solid #ff4757; 
-            padding: 15px; margin-bottom: 15px; border-radius: 8px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .btn { padding: 10px 15px; border-radius: 5px; text-decoration: none; font-weight: bold; border: none; cursor: pointer; }
-        .btn-map { background: #1e90ff; color: white; }
-        .btn-del { background: #444; color: white; margin-left: 10px; }
-        h1 { color: #ff4757; text-align: center; }
+        body { font-family: 'Arial', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        .header { background: #2c3e50; color: white; padding: 20px; text-align: center; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; border-left: 5px solid #e74c3c; }
+        .card h3 { margin: 0 0 10px 0; color: #e74c3c; }
+        .btn-group { display: flex; gap: 10px; }
+        .btn { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; font-weight: bold; font-size: 14px; }
+        .btn-map { background-color: #3498db; color: white; }
+        .btn-del { background-color: #95a5a6; color: white; }
+        #status { text-align: center; color: #7f8c8d; font-style: italic; }
     </style>
 </head>
 <body>
 
-    <h1>🆘 SOS ADMIN PANEL</h1>
-    <div id="display">Yuklanmoqda...</div>
+    <div class="header">
+        <h1>Parkent Turizm Yordamchisi</h1>
+        <p>Admin Boshqaruv Paneli (Jonli rejim)</p>
+    </div>
+
+    <div id="display-list">
+        <p id="status">Ma'lumotlar yuklanmoqda, kuting...</p>
+    </div>
 
 <script>
+    // Firebase Sozlamalari
     const firebaseConfig = {
         apiKey: "AIzaSyCwhY9eF8gIO5Ew9MaYmzSbfKUs0wByOAM",
         authDomain: "bek-bola.firebaseapp.com",
@@ -34,51 +41,53 @@
         appId: "1:617804928629:web:4402d65810cf3d30810a3c"
     };
 
-    // Firebase ni boshlash
+    // Firebase-ni ishga tushirish
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
     const database = firebase.database();
 
-    // Bazani kuzatish
+    // MA'LUMOTLARNI OLISH
+    const listDiv = document.getElementById('display-list');
+
     database.ref('chaqiruvlar/').on('value', (snapshot) => {
-        const display = document.getElementById('display');
         const data = snapshot.val();
-        
+        listDiv.innerHTML = ""; // Tozalash
+
         if (data) {
-            display.innerHTML = "";
             Object.keys(data).reverse().forEach(key => {
                 const item = data[key];
-                
-                // MAP LINKINI TO'G'RI YARATAMIZ (Xatosiz)
-                const mapUrl = "https://www.google.com/maps?q=" + item.lat + "," + item.lng;
-                
-                display.innerHTML += `
+                // Google Maps linki
+                const googleMapsUrl = "https://www.google.com/maps?q=" + item.lat + "," + item.lng;
+
+                listDiv.innerHTML += `
                     <div class="card">
                         <div>
-                            <h3 style="margin:0;">${item.turi}</h3>
-                            <p>Vaqt: ${item.vaqt}</p>
-                            <p style="font-size:12px; color:#888;">ID: ${key}</p>
+                            <h3>${item.turi || 'SOS Xabari'}</h3>
+                            <p><b>Vaqt:</b> ${item.vaqt}</p>
+                            <p><b>Joylashuv:</b> ${item.lat.toFixed(4)}, ${item.lng.toFixed(4)}</p>
                         </div>
-                        <div>
-                            <a href="${mapUrl}" target="_blank" class="btn btn-map">📍 Xaritada</a>
-                            <button onclick="deleteCall('${key}')" class="btn btn-del">O'chirish</button>
+                        <div class="btn-group">
+                            <a href="${googleMapsUrl}" target="_blank" class="btn btn-map">📍 Xaritada</a>
+                            <button onclick="deleteItem('${key}')" class="btn btn-del">O'chirish</button>
                         </div>
                     </div>
                 `;
             });
         } else {
-            display.innerHTML = "<p style='text-align:center; color:#666;'>Hozircha xabarlar yo'q.</p>";
+            listDiv.innerHTML = "<p id='status'>Hozircha hech qanday yordam so'rovi yo'q.</p>";
         }
     }, (error) => {
-        alert("Xato: " + error.message);
+        listDiv.innerHTML = "<p style='color:red;'>Xato yuz berdi: " + error.message + "</p>";
     });
 
-    function deleteCall(id) {
-        if(confirm("O'chirilsinmi?")) {
+    // O'chirish funksiyasi
+    function deleteItem(id) {
+        if(confirm("Ushbu xabarni ro'yxatdan o'chirasizmi?")) {
             database.ref('chaqiruvlar/' + id).remove();
         }
     }
 </script>
+
 </body>
 </html>
