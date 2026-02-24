@@ -2,18 +2,13 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <title>BEK_BOLA | ADMIN</title>
+    <title>ADMIN | BEK BOLA</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <style>
-        body { font-family: sans-serif; background: #121212; color: white; padding: 20px; }
-        .card { background: #1e1e1e; border-left: 8px solid #ff3b3b; padding: 15px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; }
-        .btn { background: #0a5cff; color: white; padding: 10px; text-decoration: none; border-radius: 5px; }
-    </style>
 </head>
-<body>
-    <h1>Kelgan xabarlar</h1>
-    <div id="list"></div>
+<body style="font-family:sans-serif; background:#1a1a1a; color:white; padding:20px;">
+    <h1>SOS Xabarlar</h1>
+    <div id="display">Kutilmoqda...</div>
 
     <script>
         const firebaseConfig = {
@@ -26,38 +21,36 @@
             appId: "1:617804928629:web:4402d65810cf3d30810a3c"
         };
 
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
         const database = firebase.database();
 
-        // Bazani doimiy kuzatish
         database.ref('chaqiruvlar/').on('value', (snapshot) => {
-            const listDiv = document.getElementById('list');
-            listDiv.innerHTML = "";
+            const display = document.getElementById('display');
+            display.innerHTML = "";
             const data = snapshot.val();
             
             if (data) {
                 Object.keys(data).forEach(key => {
                     const item = data[key];
-                    listDiv.innerHTML += `
-                        <div class="card">
-                            <div>
-                                <h3>${item.turi}</h3>
-                                <p>Vaqt: ${item.vaqt}</p>
-                            </div>
-                            <div>
-                                <a href="https://www.google.com/maps?q=${item.lat},${item.lng}" target="_blank" class="btn">📍 Xarita</a>
-                                <button onclick="deleteMsg('${key}')" style="background:red; color:white; border:none; padding:10px; border-radius:5px; margin-left:10px;">X</button>
-                            </div>
+                    display.innerHTML += `
+                        <div style="background:#333; padding:15px; margin-bottom:10px; border-left:5px solid red;">
+                            <h3>${item.turi}</h3>
+                            <p>Vaqt: ${item.vaqt}</p>
+                            <a href="https://www.google.com/maps?q=${item.lat},${item.lng}" target="_blank" style="color:#1e90ff;">Xaritada ko'rish</a>
+                            <button onclick="deleteX('${key}')" style="margin-left:20px; background:red; color:white; border:none; padding:5px 10px; cursor:pointer;">O'chirish</button>
                         </div>
                     `;
                 });
             } else {
-                listDiv.innerHTML = "<p>Hozircha xabarlar yo'q</p>";
+                display.innerHTML = "Hozircha xabarlar yo'q.";
             }
         });
 
-        function deleteMsg(key) {
-            database.ref('chaqiruvlar/' + key).remove();
+        function deleteX(id) {
+            database.ref('chaqiruvlar/' + id).remove();
         }
     </script>
 </body>
