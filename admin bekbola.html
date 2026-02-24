@@ -1,57 +1,37 @@
-<!DOCTYPE html>
-<html lang="uz">
-<head>
-    <meta charset="UTF-8">
-    <title>ADMIN | BEK BOLA</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-</head>
-<body style="font-family:sans-serif; background:#1a1a1a; color:white; padding:20px;">
-    <h1>SOS Xabarlar</h1>
-    <div id="display">Kutilmoqda...</div>
+// ... yuqoridagi config qismi o'sha-o'sha qoladi ...
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyCwhY9eF8gIO5Ew9MaYmzSbfKUs0wByOAM",
-            authDomain: "bek-bola.firebaseapp.com",
-            databaseURL: "https://bek-bola-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "bek-bola",
-            storageBucket: "bek-bola.firebasestorage.app",
-            messagingSenderId: "617804928629",
-            appId: "1:617804928629:web:4402d65810cf3d30810a3c"
-        };
+const database = firebase.database();
 
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+// Ulanish holatini tekshirish
+database.ref(".info/connected").on("value", (snap) => {
+    if (snap.val() === true) {
+        console.log("Admin Panel: Serverga ulandi!");
+    } else {
+        console.log("Admin Panel: Ulanishda muammo!");
+    }
+});
 
-        const database = firebase.database();
-
-        database.ref('chaqiruvlar/').on('value', (snapshot) => {
-            const display = document.getElementById('display');
-            display.innerHTML = "";
-            const data = snapshot.val();
-            
-            if (data) {
-                Object.keys(data).forEach(key => {
-                    const item = data[key];
-                    display.innerHTML += `
-                        <div style="background:#333; padding:15px; margin-bottom:10px; border-left:5px solid red;">
-                            <h3>${item.turi}</h3>
-                            <p>Vaqt: ${item.vaqt}</p>
-                            <a href="https://www.google.com/maps?q=${item.lat},${item.lng}" target="_blank" style="color:#1e90ff;">Xaritada ko'rish</a>
-                            <button onclick="deleteX('${key}')" style="margin-left:20px; background:red; color:white; border:none; padding:5px 10px; cursor:pointer;">O'chirish</button>
-                        </div>
-                    `;
-                });
-            } else {
-                display.innerHTML = "Hozircha xabarlar yo'q.";
-            }
+// Ma'lumotlarni olish
+database.ref('chaqiruvlar/').on('value', (snapshot) => {
+    console.log("Ma'lumot keldi:", snapshot.val()); // Konsolga chiqarib ko'ramiz
+    const display = document.getElementById('display');
+    const data = snapshot.val();
+    
+    if (data) {
+        display.innerHTML = "";
+        Object.keys(data).forEach(key => {
+            const item = data[key];
+            display.innerHTML += `
+                <div style="background:#333; padding:15px; margin-bottom:10px; border-left:5px solid red;">
+                    <h3>${item.turi}</h3>
+                    <p>Vaqt: ${item.vaqt}</p>
+                    <button onclick="deleteX('${key}')" style="background:red; color:white; border:none; padding:5px 10px;">O'chirish</button>
+                </div>
+            `;
         });
-
-        function deleteX(id) {
-            database.ref('chaqiruvlar/' + id).remove();
-        }
-    </script>
-</body>
-</html>
+    } else {
+        display.innerHTML = "Bazadan ma'lumot topilmadi (Baza bo'sh).";
+    }
+}, (error) => {
+    alert("Ma'lumotni o'qishda xato: " + error.message);
+});
