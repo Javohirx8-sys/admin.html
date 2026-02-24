@@ -1,37 +1,58 @@
-// ... yuqoridagi config qismi o'sha-o'sha qoladi ...
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <title>ADMIN | BEK BOLA</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+</head>
+<body style="font-family:sans-serif; background:#121212; color:white; padding:20px;">
+    <h1 style="border-bottom: 2px solid #ff3b3b; padding-bottom:10px;">Kelgan SOS Xabarlar</h1>
+    <div id="display">Baza tekshirilmoqda...</div>
 
-const database = firebase.database();
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCwhY9eF8gIO5Ew9MaYmzSbfKUs0wByOAM",
+            authDomain: "bek-bola.firebaseapp.com",
+            databaseURL: "https://bek-bola-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "bek-bola",
+            storageBucket: "bek-bola.firebasestorage.app",
+            messagingSenderId: "617804928629",
+            appId: "1:617804928629:web:4402d65810cf3d30810a3c"
+        };
 
-// Ulanish holatini tekshirish
-database.ref(".info/connected").on("value", (snap) => {
-    if (snap.val() === true) {
-        console.log("Admin Panel: Serverga ulandi!");
-    } else {
-        console.log("Admin Panel: Ulanishda muammo!");
-    }
-});
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
 
-// Ma'lumotlarni olish
-database.ref('chaqiruvlar/').on('value', (snapshot) => {
-    console.log("Ma'lumot keldi:", snapshot.val()); // Konsolga chiqarib ko'ramiz
-    const display = document.getElementById('display');
-    const data = snapshot.val();
-    
-    if (data) {
-        display.innerHTML = "";
-        Object.keys(data).forEach(key => {
-            const item = data[key];
-            display.innerHTML += `
-                <div style="background:#333; padding:15px; margin-bottom:10px; border-left:5px solid red;">
-                    <h3>${item.turi}</h3>
-                    <p>Vaqt: ${item.vaqt}</p>
-                    <button onclick="deleteX('${key}')" style="background:red; color:white; border:none; padding:5px 10px;">O'chirish</button>
-                </div>
-            `;
+        // Ma'lumotni o'qish
+        database.ref('chaqiruvlar/').on('value', (snapshot) => {
+            const display = document.getElementById('display');
+            const data = snapshot.val();
+            
+            if (data) {
+                display.innerHTML = "";
+                Object.keys(data).reverse().forEach(key => {
+                    const item = data[key];
+                    display.innerHTML += `
+                        <div style="background:#222; padding:15px; margin-bottom:15px; border-left:8px solid #ff3b3b; border-radius:5px;">
+                            <h2 style="margin:0; color:#ff3b3b;">${item.turi}</h2>
+                            <p><b>Vaqt:</b> ${item.vaqt}</p>
+                            <p><b>Koordinata:</b> ${item.lat.toFixed(5)}, ${item.lng.toFixed(5)}</p>
+                            <a href="https://www.google.com/maps?q=${item.lat},${item.lng}" target="_blank" style="background:#0a5cff; color:white; padding:8px 15px; text-decoration:none; border-radius:5px; display:inline-block; margin-top:10px;">📍 Xaritada ko'rish</a>
+                            <button onclick="deleteMsg('${key}')" style="background:#444; color:#ccc; border:none; padding:8px 15px; border-radius:5px; cursor:pointer; margin-left:10px;">O'chirish</button>
+                        </div>
+                    `;
+                });
+            } else {
+                display.innerHTML = "<p style='color:#666;'>Hozircha xabarlar yo'q. Baza bo'sh.</p>";
+            }
         });
-    } else {
-        display.innerHTML = "Bazadan ma'lumot topilmadi (Baza bo'sh).";
-    }
-}, (error) => {
-    alert("Ma'lumotni o'qishda xato: " + error.message);
-});
+
+        function deleteMsg(id) {
+            if(confirm("Ushbu xabarni o'chirmoqchimisiz?")) {
+                database.ref('chaqiruvlar/' + id).remove();
+            }
+        }
+    </script>
+</body>
+</html>
