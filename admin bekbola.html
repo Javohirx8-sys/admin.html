@@ -6,51 +6,63 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body { font-family: sans-serif; background: #1a1a1a; color: white; padding: 20px; }
-        .card { background: #2a2a2a; border-left: 10px solid #ff3b3b; padding: 20px; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .btn { background: #0a5cff; color: white; padding: 10px; text-decoration: none; border-radius: 5px; cursor: pointer; border: none; }
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; padding: 20px; }
+        .card { background: #1e1e1e; border-left: 10px solid #ff3b3b; padding: 15px; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .btn { background: #0a5cff; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; font-weight: bold; border: none; cursor: pointer; }
+        .btn-done { background: #2ecc71; margin-left: 10px; }
+        h1 { border-bottom: 2px solid #333; padding-bottom: 10px; }
     </style>
 </head>
 <body>
-    <h1>🆘 Kelgan Chaqiruvlar (Live)</h1>
+    <h1>🆘 Kelgan Chaqiruvlar (Jonli)</h1>
     <div id="ruyxat"></div>
 
     <script>
-        // FIREBASE SOZLAMALARI (Yuqoridagi bilan bir xil bo'lsin)
         const firebaseConfig = {
-            apiKey: "BU_YERGA_API_KEY_QOYILADI",
+            apiKey: "AIzaSyCwhY9eF8gIO5Ew9MaYmzSbfKUs0wByOAM",
             authDomain: "bek-bola.firebaseapp.com",
-            databaseURL: "https://bek-bola-default-rtdb.europe-west1.firebasedatabase.app/",
+            databaseURL: "https://bek-bola-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "bek-bola",
-            storageBucket: "bek-bola.appspot.com",
-            messagingSenderId: "SENDER_ID",
-            appId: "APP_ID"
+            storageBucket: "bek-bola.firebasestorage.app",
+            messagingSenderId: "617804928629",
+            appId: "1:617804928629:web:4402d65810cf3d30810a3c"
         };
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        database.ref('chaqiruvlar/').on('child_added', (snap) => {
-            const data = snap.val();
-            const div = document.createElement('div');
-            div.className = 'card';
-            div.id = data.id;
-            div.innerHTML = `
-                <div>
-                    <h3>${data.turi}</h3>
-                    <p>ID: ${data.id} | Vaqt: ${data.vaqt}</p>
-                </div>
-                <div>
-                    <a href="https://www.google.com/maps?q=${data.lat},${data.lng}" target="_blank" class="btn">📍 Xarita</a>
-                    <button onclick="uchirish('${data.id}')" style="background:green" class="btn">✅ Bajarildi</button>
-                </div>
-            `;
-            document.getElementById('ruyxat').prepend(div);
-            new Audio('https://media.geeksforgeeks.org/wp-content/uploads/20190531135120/beep.mp3').play();
+        // Ma'lumotlarni real vaqtda kuzatish
+        database.ref('chaqiruvlar/').on('value', (snapshot) => {
+            const list = document.getElementById('ruyxat');
+            list.innerHTML = "";
+            const data = snapshot.val();
+            
+            if(data) {
+                Object.keys(data).forEach(key => {
+                    const item = data[key];
+                    const div = document.createElement('div');
+                    div.className = 'card';
+                    div.id = item.id;
+                    div.innerHTML = `
+                        <div>
+                            <h2 style="margin:0; color:#ff3b3b;">${item.turi}</h2>
+                            <p><b>ID:</b> ${item.id} | <b>Vaqt:</b> ${item.vaqt}</p>
+                        </div>
+                        <div>
+                            <a href="https://www.google.com/maps?q=${item.lat},${item.lng}" target="_blank" class="btn">📍 Xarita</a>
+                            <button onclick="uchirish('${item.id}')" class="btn btn-done">✅ Bajarildi</button>
+                        </div>
+                    `;
+                    list.prepend(div);
+                });
+                // Yangi chaqiruv kelganda ovoz chiqarish
+                new Audio('https://media.geeksforgeeks.org/wp-content/uploads/20190531135120/beep.mp3').play();
+            }
         });
 
         function uchirish(id) {
-            database.ref('chaqiruvlar/' + id).remove();
-            document.getElementById(id).remove();
+            if(confirm("Bu chaqiruvni o'chirasizmi?")) {
+                database.ref('chaqiruvlar/' + id).remove();
+            }
         }
     </script>
 </body>
