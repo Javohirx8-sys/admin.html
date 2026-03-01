@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <title>Parkent Admin Panel</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #0f172a; color: white; padding: 20px; }
+        .header { border-bottom: 2px solid #3b82f6; padding-bottom: 10px; margin-bottom: 20px; }
+        .card { background: #1e293b; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 5px solid #ef4444; display: flex; justify-content: space-between; align-items: center; }
+        .btn { background: #3b82f6; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; font-weight: bold; }
+        .status { font-size: 14px; color: #94a3b8; }
+        #conn-status { font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Parkent Turizm: Admin Panel</h1>
+        <div class="status">Server holati: <span id="conn-status">Tekshirilmoqda...</span></div>
+    </div>
+
+    <div id="list">Ma'lumotlar yuklanmoqda...</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCwhY9eF8gIO5Ew9MaYmzSbfKUs0wByOAM",
+        authDomain: "bek-bola.firebaseapp.com",
+        databaseURL: "https://bek-bola-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "bek-bola",
+        storageBucket: "bek-bola.firebasestorage.app",
+        messagingSenderId: "617804928629",
+        appId: "1:617804928629:web:4402d65810cf3d30810a3c"
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    // Aloqani tekshirish
+    database.ref(".info/connected").on("value", (s) => {
+        const st = document.getElementById('conn-status');
+        st.innerText = s.val() ? "ONLINE ✅" : "OFFLINE ❌";
+        st.style.color = s.val() ? "#22c55e" : "#ef4444";
+    });
+
+    // Ma'lumotlarni o'qish
+    database.ref('chaqiruvlar/').on('value', (snap) => {
+        const listDiv = document.getElementById('list');
+        const data = snap.val();
+        listDiv.innerHTML = "";
+
+        if (data) {
+            Object.keys(data).reverse().forEach(key => {
+                const item = data[key];
+                listDiv.innerHTML += `
+                    <div class="card">
+                        <div>
+                            <h3 style="margin:0; color:#ef4444;">${item.turi || 'SOS'}</h3>
+                            <p style="margin:5px 0;">Vaqt: ${item.vaqt}</p>
+                        </div>
+                        <a href="https://www.google.com/maps?q=${item.lat},${item.lng}" target="_blank" class="btn">📍 Xaritada ko'rish</a>
+                    </div>
+                `;
+            });
+        } else {
+            listDiv.innerHTML = "<p>Hozircha xabarlar yo'q.</p>";
+        }
+    });
+</script>
+</body>
+</html>
