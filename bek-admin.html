@@ -1,46 +1,62 @@
 <!DOCTYPE html>
-<html>
+<html lang="uz">
 <head>
-    <meta charset="UTF-8"><title>CONTROL PANEL</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <meta charset="UTF-8">
+    <title>ADMIN PANEL | BEK_BOLA Monitoring</title>
     <style>
-        body { background: #000; color: #0f0; font-family: monospace; padding: 20px; }
-        .alert-card { border: 1px solid #0f0; padding: 15px; margin: 10px 0; background: rgba(0, 255, 0, 0.1); display: flex; justify-content: space-between; align-items: center; }
-        .sos-alert { background: rgba(255, 0, 0, 0.2); border-color: red; color: red; animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0.5; } }
-        .btn { background: #0f0; color: #000; padding: 10px; border: none; cursor: pointer; text-decoration: none; font-weight: bold; }
+        body { font-family: sans-serif; background: #1a1a1a; color: white; padding: 20px; }
+        h1 { color: #0a5cff; text-align: center; }
+        .alert-card { background: #333; padding: 15px; margin: 10px 0; border-left: 5px solid #ff3b3b; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; animation: slideIn 0.5s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        .btn { background: #0a5cff; color: white; padding: 8px 15px; text-decoration: none; border-radius: 5px; font-weight: bold; }
+        .status-new { color: #ff3b3b; font-weight: bold; }
+        #list { max-width: 800px; margin: 0 auto; }
     </style>
 </head>
 <body>
-    <h1>SYSTEM MONITOR [bek-bola]</h1>
-    <div id="display">Awaiting signals...</div>
+    <h1>🛰 BEK_BOLA | Situatsion Markaz</h1>
+    <div id="list">
+        <p style="text-align: center;">Murojaatlar kutilmoqda...</p>
+    </div>
 
-<script>
-    firebase.initializeApp({ databaseURL: "https://bek-bola-default-rtdb.europe-west1.firebasedatabase.app" });
-    const db = firebase.database();
+    <script>
+        const databaseURL = "https://bek-bola-default-rtdb.europe-west1.firebasedatabase.app";
 
-    db.ref('alerts/').on('value', snap => {
-        const container = document.getElementById('display');
-        container.innerHTML = "";
-        const data = snap.val();
-        if(data) {
-            Object.keys(data).reverse().forEach(id => {
-                const a = data[id];
-                const isSos = a.type === 'SOS' ? 'sos-alert' : '';
-                container.innerHTML += `
-                    <div class="alert-card ${isSos}">
+        async function fetchAlerts() {
+            try {
+                const res = await fetch(`${databaseURL}/alerts.json`);
+                const data = await res.json();
+                const listDiv = document.getElementById('list');
+                listDiv.innerHTML = "";
+
+                if (!data) {
+                    listDiv.innerHTML = "<p style='text-align: center;'>Hozircha murojaatlar yo'q.</p>";
+                    return;
+                }
+
+                // Ma'lumotlarni teskari tartibda chiqarish (yangi xabar tepada)
+                Object.keys(data).reverse().forEach(id => {
+                    const alert = data[id];
+                    const card = document.createElement('div');
+                    card.className = 'alert-card';
+                    card.innerHTML = `
                         <div>
-                            <strong>[${a.type}]</strong><br>
-                            Time: ${a.time}<br>
-                            GPS: ${a.lat.toFixed(4)}, ${a.lng.toFixed(4)}
+                            <span class="status-new">[${alert.type}]</span> 
+                            <b>Vaqt:</b> ${alert.time}<br>
+                            <small>Lat: ${alert.lat}, Lon: ${alert.lon}</small>
                         </div>
-                        <a href="https://www.google.com/maps?q=${a.lat},${a.lng}" target="_blank" class="btn">VIEW MAP</a>
-                        <button onclick="firebase.database().ref('alerts/${id}').remove()" class="btn" style="background:grey">DONE</button>
-                    </div>`;
-            });
+                        <a href="https://www.google.com{alert.lat},${alert.lon}" target="_blank" class="btn">📍 Xaritada ko'rish</a>
+                    `;
+                    listDiv.appendChild(card);
+                });
+            } catch (e) {
+                console.error("Xatolik:", e);
+            }
         }
-    });
-</script>
+
+        // Har 5 soniyada bazani tekshirib turadi
+        setInterval(fetchAlerts, 5000);
+        fetchAlerts();
+    </script>
 </body>
 </html>
