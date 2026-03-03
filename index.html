@@ -2,61 +2,94 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ADMIN PANEL | BEK_BOLA Monitoring</title>
     <style>
-        body { font-family: sans-serif; background: #1a1a1a; color: white; padding: 20px; }
-        h1 { color: #0a5cff; text-align: center; }
-        .alert-card { background: #333; padding: 15px; margin: 10px 0; border-left: 5px solid #ff3b3b; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; animation: slideIn 0.5s ease-out; }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
-        .btn { background: #0a5cff; color: white; padding: 8px 15px; text-decoration: none; border-radius: 5px; font-weight: bold; }
-        .status-new { color: #ff3b3b; font-weight: bold; }
-        #list { max-width: 800px; margin: 0 auto; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #e0e0e0; margin: 0; padding: 20px; }
+        h1 { color: #0a5cff; text-align: center; text-transform: uppercase; letter-spacing: 2px; }
+        #list { max-width: 900px; margin: 20px auto; }
+        .alert-card { background: #1e1e1e; border-radius: 12px; padding: 20px; margin-bottom: 15px; border-left: 8px solid #ff3b3b; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .alert-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .type-badge { background: #ff3b3b; color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; }
+        .address-box { color: #aaa; font-size: 14px; font-style: italic; background: #252525; padding: 10px; border-radius: 8px; }
+        .btn-box { display: flex; justify-content: flex-end; margin-top: 5px; }
+        .btn { background: #0a5cff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: bold; transition: 0.3s; }
+        .btn:hover { background: #0041c2; transform: translateY(-2px); }
+        .time { font-size: 12px; color: #777; }
     </style>
 </head>
 <body>
+
     <h1>🛰 BEK_BOLA | Situatsion Markaz</h1>
     <div id="list">
-        <p style="text-align: center;">Murojaatlar kutilmoqda...</p>
+        <p style="text-align: center;">Murojaatlar yuklanmoqda...</p>
     </div>
 
     <script>
         const databaseURL = "https://bek-bola-default-rtdb.europe-west1.firebasedatabase.app";
+
+        // Manzilni aniqlash funksiyasi (Reverse Geocoding)
+        async function getAddress(lat, lon) {
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org{lat}&lon=${lon}`);
+                const data = await res.json();
+                // Manzilni qisqartirib olish (Parkent tumani qismini chiqarish uchun)
+                return data.display_name || "Manzil aniqlanmadi";
+            } catch (e) {
+                return "Manzilni yuklashda xatolik";
+            }
+        }
 
         async function fetchAlerts() {
             try {
                 const res = await fetch(`${databaseURL}/alerts.json`);
                 const data = await res.json();
                 const listDiv = document.getElementById('list');
-                listDiv.innerHTML = "";
 
                 if (!data) {
                     listDiv.innerHTML = "<p style='text-align: center;'>Hozircha murojaatlar yo'q.</p>";
                     return;
                 }
 
-                // Ma'lumotlarni teskari tartibda chiqarish (yangi xabar tepada)
-                Object.keys(data).reverse().forEach(id => {
+                listDiv.innerHTML = ""; // Ro'yxatni tozalash
+
+                const keys = Object.keys(data).reverse(); // Yangilari tepada
+
+                for (let id of keys) {
                     const alert = data[id];
                     const card = document.createElement('div');
                     card.className = 'alert-card';
+                    
+                    // Manzilni olish (Har bir karta uchun)
+                    const address = await getAddress(alert.lat, alert.lon);
+
                     card.innerHTML = `
-                        <div>
-                            <span class="status-new">[${alert.type}]</span> 
-                            <b>Vaqt:</b> ${alert.time}<br>
-                            <small>Lat: ${alert.lat}, Lon: ${alert.lon}</small>
+                        <div class="alert-header">
+                            <span class="type-badge">${alert.type}</span>
+                            <span class="time">${alert.time}</span>
                         </div>
-                        <a href="https://www.google.com{alert.lat},${alert.lon}" target="_blank" class="btn">📍 Xaritada ko'rish</a>
+                        <div class="address-box">
+                            📍 <b>Manzil:</b> ${address}
+                        </div>
+                        <div style="font-size: 13px; color: #888;">
+                            Kenglik: ${alert.lat} | Uzunlik: ${alert.lon}
+                        </div>
+                        <div class="btn-box">
+                            <a href="https://www.google.com{alert.lat},${alert.lon}" target="_blank" class="btn">Xaritada ochish ➔</a>
+                        </div>
                     `;
                     listDiv.appendChild(card);
-                });
+                }
             } catch (e) {
                 console.error("Xatolik:", e);
             }
         }
 
-        // Har 5 soniyada bazani tekshirib turadi
-        setInterval(fetchAlerts, 5000);
+        // Har 10 soniyada yangilab turadi (OpenStreetMap yukini kamaytirish uchun)
+        setInterval(fetchAlerts, 10000);
         fetchAlerts();
     </script>
+
 </body>
 </html>
