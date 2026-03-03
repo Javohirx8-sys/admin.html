@@ -16,7 +16,6 @@
         .alert-item { background: var(--card); padding: 20px; border-radius: 15px; margin-bottom: 15px; border-left: 6px solid #ef4444; }
         .btn { padding: 10px 15px; border-radius: 8px; border: none; color: white; cursor: pointer; font-weight: bold; text-decoration: none; display: inline-block; margin-top: 10px; }
         .btn-g { background: #22c55e; }
-        .btn-b { background: var(--primary); }
     </style>
 </head>
 <body>
@@ -56,32 +55,33 @@
     }
 
     async function load() {
-        const res = await fetch(`${dbURL}/alerts.json`);
-        const data = await res.json();
-        let cnt = { SOS: 0, TEZ_YORDAM: 0 };
-        const box = document.getElementById('data');
-        if(document.getElementById('list').style.display === 'block') box.innerHTML = "";
+        try {
+            const res = await fetch(`${dbURL}/alerts.json`);
+            const data = await res.json();
+            let cnt = { SOS: 0, TEZ_YORDAM: 0 };
+            const box = document.getElementById('data');
+            if(document.getElementById('list').style.display === 'block') box.innerHTML = "";
 
-        if(data) {
-            Object.keys(data).reverse().forEach(id => {
-                const item = data[id];
-                cnt[item.type]++;
-                if(document.getElementById('list').style.display === 'block' && item.type === cat) {
-                    const div = document.createElement('div');
-                    div.className = 'alert-item';
-                    div.style.borderColor = item.type === 'SOS' ? '#ef4444' : '#3b82f6';
-                    div.innerHTML = `
-                        <b>🕒 Vaqt: ${item.time}</b><br>
-                        <small>Lat: ${item.lat}, Lon: ${item.lon}</small><br>
-                        <button class="btn btn-g" onclick="window.open('https://www.google.com{item.lat},${item.lon}', '_blank')">📍 Google Maps</button>
-                        <button class="btn btn-b" onclick="alert('Chat tez orada ishga tushadi!')">💬 Chat</button>
-                    `;
-                    box.appendChild(div);
-                }
-            });
-        }
-        document.getElementById('c-SOS').innerText = cnt.SOS;
-        document.getElementById('c-TEZ_YORDAM').innerText = cnt.TEZ_YORDAM;
+            if(data) {
+                Object.keys(data).reverse().forEach(id => {
+                    const item = data[id];
+                    cnt[item.type]++;
+                    if(document.getElementById('list').style.display === 'block' && item.type === cat) {
+                        const div = document.createElement('div');
+                        div.className = 'alert-item';
+                        div.style.borderColor = item.type === 'SOS' ? '#ef4444' : '#3b82f6';
+                        div.innerHTML = `
+                            <b>🕒 Vaqt: ${item.time}</b><br>
+                            <small>Lat: ${item.lat}, Lon: ${item.lon}</small><br>
+                            <a href="https://www.google.com{item.lat},${item.lon}" target="_self" class="btn btn-g">📍 Google Maps'da ko'rish</a>
+                        `;
+                        box.appendChild(div);
+                    }
+                });
+            }
+            document.getElementById('c-SOS').innerText = cnt.SOS;
+            document.getElementById('c-TEZ_YORDAM').innerText = cnt.TEZ_YORDAM;
+        } catch(e) { console.log(e); }
     }
 
     setInterval(load, 5000);
