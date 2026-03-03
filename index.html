@@ -2,86 +2,41 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <title>BEK_BOLA ADMIN | Monitoring</title>
+    <title>ADMIN | BEK_BOLA</title>
     <style>
-        body { font-family: sans-serif; background: #0f172a; color: white; margin: 0; padding: 20px; }
-        header { background: #1e293b; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; }
-        .menu-card { background: #1e293b; padding: 30px; border-radius: 20px; text-align: center; cursor: pointer; border-bottom: 5px solid #0a5cff; position: relative; }
-        .badge { position: absolute; top: 10px; right: 10px; background: #ef4444; padding: 5px 10px; border-radius: 10px; font-weight: bold; }
-        .alert-list { display: none; margin-top: 20px; }
-        .card { background: #1e293b; padding: 15px; border-radius: 15px; margin-bottom: 10px; border-left: 6px solid #ef4444; }
-        .btn-map { display: inline-block; background: #22c55e; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 10px; }
-        .back-btn { background: #64748b; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; margin-bottom: 10px; }
+        body { font-family: sans-serif; background: #0f172a; color: white; padding: 20px; }
+        .card { background: #1e293b; padding: 20px; border-radius: 15px; margin-bottom: 15px; border-left: 8px solid #ff3b3b; }
+        .btn { background: #22c55e; color: white; padding: 12px; border-radius: 10px; text-decoration: none; display: inline-block; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
+    <h1>🛰 BEK_BOLA Situatsion Markaz</h1>
+    <div id="data">Yuklanmoqda...</div>
 
-<header>
-    <h3>🛰 BEK_BOLA Situatsion Markaz</h3>
-    <button onclick="document.body.style.background = document.body.style.background === 'white' ? '#0f172a' : 'white'; document.body.style.color = document.body.style.color === 'white' ? 'black' : 'white';">🌓 Rejim</button>
-</header>
+    <script>
+        const db = "https://bek-bola-default-rtdb.europe-west1.firebasedatabase.app";
 
-<div id="menu">
-    <div class="menu-grid">
-        <div class="menu-card" onclick="openCat('SOS')" style="border-color: #ef4444;">
-            <span style="font-size: 40px;">🆘</span><h3>SOS</h3><span id="count-SOS" class="badge">0</span>
-        </div>
-        <div class="menu-card" onclick="openCat('TEZ_YORDAM')" style="border-color: #3b82f6;">
-            <span style="font-size: 40px;">🚑</span><h3>TEZ YORDAM</h3><span id="count-TEZ_YORDAM" class="badge">0</span>
-        </div>
-    </div>
-</div>
+        async function load() {
+            const res = await fetch(db);
+            const data = await res.json();
+            const box = document.getElementById('data');
+            box.innerHTML = "";
 
-<div id="list-view" class="alert-list">
-    <button class="back-btn" onclick="location.reload()">⬅ Orqaga</button>
-    <h2 id="cat-title"></h2>
-    <div id="items"></div>
-</div>
-
-<script>
-    const dbURL = "https://bek-bola-default-rtdb.europe-west1.firebasedatabase.app";
-    let currentCat = "";
-
-    function openCat(c) {
-        currentCat = c;
-        document.getElementById('menu').style.display = 'none';
-        document.getElementById('list-view').style.display = 'block';
-        document.getElementById('cat-title').innerText = c + " Murojaatlari";
-        loadData();
-    }
-
-    async function loadData() {
-        const res = await fetch(`${dbURL}/alerts.json`);
-        const data = await res.json();
-        const box = document.getElementById('items');
-        let counts = { SOS: 0, TEZ_YORDAM: 0 };
-        
-        if (document.getElementById('list-view').style.display === 'block') box.innerHTML = "";
-
-        if (data) {
-            Object.keys(data).reverse().forEach(id => {
-                const item = data[id];
-                counts[item.type]++;
-                if (document.getElementById('list-view').style.display === 'block' && item.type === currentCat) {
+            if(data) {
+                Object.keys(data).reverse().forEach(id => {
+                    const it = data[id];
                     const div = document.createElement('div');
                     div.className = 'card';
-                    div.style.borderColor = item.type === 'SOS' ? '#ef4444' : '#3b82f6';
+                    div.style.borderColor = it.type === 'SOS' ? '#ff3b3b' : '#0a5cff';
                     div.innerHTML = `
-                        <b>🕒 Vaqt: ${item.time}</b><br>
-                        <small>Lat: ${item.lat}, Lon: ${item.lon}</small><br>
-                        <a href="https://www.google.com{item.lat},${item.lon}" target="_blank" class="btn-map">📍 Google Maps</a>
+                        <b>Turi: ${it.type}</b> | Vaqt: ${it.time}<br>
+                        <a href="https://www.google.com{it.lat},${it.lon}" target="_blank" class="btn">📍 Google Mapsda ochish</a>
                     `;
                     box.appendChild(div);
-                }
-            });
+                });
+            }
         }
-        document.getElementById('count-SOS').innerText = counts.SOS;
-        document.getElementById('count-TEZ_YORDAM').innerText = counts.TEZ_YORDAM;
-    }
-
-    setInterval(loadData, 5000);
-    loadData();
-</script>
+        setInterval(load, 5000); load();
+    </script>
 </body>
 </html>
