@@ -3,93 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ADMIN PANEL | BEK_BOLA Monitoring</title>
+    <title>SITUATSION MARKAZ | BEK_BOLA</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #e0e0e0; margin: 0; padding: 20px; }
-        h1 { color: #0a5cff; text-align: center; text-transform: uppercase; letter-spacing: 2px; }
-        #list { max-width: 900px; margin: 20px auto; }
-        .alert-card { background: #1e1e1e; border-radius: 12px; padding: 20px; margin-bottom: 15px; border-left: 8px solid #ff3b3b; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); animation: fadeIn 0.5s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .alert-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .type-badge { background: #ff3b3b; color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; }
-        .address-box { color: #aaa; font-size: 14px; font-style: italic; background: #252525; padding: 10px; border-radius: 8px; }
-        .btn-box { display: flex; justify-content: flex-end; margin-top: 5px; }
-        .btn { background: #0a5cff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: bold; transition: 0.3s; }
-        .btn:hover { background: #0041c2; transform: translateY(-2px); }
-        .time { font-size: 12px; color: #777; }
+        :root { --bg: #f4f6f8; --text: #1a1a1a; --card: #ffffff; --primary: #0a5cff; }
+        .dark-mode { --bg: #0f172a; --text: #f1f5f9; --card: #1e293b; --primary: #3b82f6; }
+        
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; }
+        header { background: var(--card); padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        
+        .container { padding: 20px; max-width: 800px; margin: auto; }
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 50px; }
+        
+        .menu-card { background: var(--card); padding: 40px 20px; border-radius: 20px; text-align: center; cursor: pointer; position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.05); transition: 0.3s; }
+        .menu-card:hover { transform: translateY(-5px); }
+        .badge { position: absolute; top: 15px; right: 15px; background: #ff3b3b; color: white; padding: 5px 12px; border-radius: 15px; font-weight: bold; }
+        
+        .list-view { display: none; }
+        .back-btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; margin-bottom: 20px; }
+        
+        .alert-item { background: var(--card); padding: 20px; border-radius: 15px; margin-bottom: 15px; border-left: 5px solid #ff3b3b; }
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        .btn { padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; text-decoration: none; color: white; font-size: 13px; }
+        .btn-gmaps { background: #34a853; }
+        .btn-chat { background: #0a5cff; }
+        
+        /* Chat oynasi */
+        .chat-box { display: none; margin-top: 10px; background: rgba(0,0,0,0.05); padding: 10px; border-radius: 10px; }
+        input { width: 70%; padding: 8px; border-radius: 5px; border: 1px solid #ddd; }
     </style>
 </head>
 <body>
 
-    <h1>🛰 BEK_BOLA | Situatsion Markaz</h1>
-    <div id="list">
-        <p style="text-align: center;">Murojaatlar yuklanmoqda...</p>
+<header>
+    <h2 style="margin:0;">🛰 BEK_BOLA Control</h2>
+    <button onclick="toggleTheme()" id="themeBtn">🌙 Tun</button>
+</header>
+
+<div class="container" id="main-menu">
+    <div class="menu-grid">
+        <div class="menu-card" onclick="openList('SOS')" style="border-bottom: 5px solid #ff3b3b;">
+            <span style="font-size: 50px;">🆘</span><br><h3>SOS</h3>
+            <span id="count-SOS" class="badge">0</span>
+        </div>
+        <div class="menu-card" onclick="openList('TEZ_YORDAM')" style="border-bottom: 5px solid #0a5cff;">
+            <span style="font-size: 50px;">🚑</span><br><h3>TEZ YORDAM</h3>
+            <span id="count-TEZ_YORDAM" class="badge">0</span>
+        </div>
     </div>
+</div>
 
-    <script>
-        const databaseURL = "https://bek-bola-default-rtdb.europe-west1.firebasedatabase.app";
+<div class="container list-view" id="list-view">
+    <button class="back-btn" onclick="goBack()">⬅ Orqaga</button>
+    <h2 id="list-title">Murojaatlar</h2>
+    <div id="data-container"></div>
+</div>
 
-        // Manzilni aniqlash funksiyasi (Reverse Geocoding)
-        async function getAddress(lat, lon) {
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org{lat}&lon=${lon}`);
-                const data = await res.json();
-                // Manzilni qisqartirib olish (Parkent tumani qismini chiqarish uchun)
-                return data.display_name || "Manzil aniqlanmadi";
-            } catch (e) {
-                return "Manzilni yuklashda xatolik";
-            }
-        }
+<script>
+    const dbURL = "https://bek-bola-default-rtdb.europe-west1.firebasedatabase.app";
+    let currentCategory = "";
 
-        async function fetchAlerts() {
-            try {
-                const res = await fetch(`${databaseURL}/alerts.json`);
-                const data = await res.json();
-                const listDiv = document.getElementById('list');
+    function toggleTheme() {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        document.getElementById('themeBtn').innerText = isDark ? "☀️ Kun" : "🌙 Tun";
+    }
 
-                if (!data) {
-                    listDiv.innerHTML = "<p style='text-align: center;'>Hozircha murojaatlar yo'q.</p>";
-                    return;
-                }
+    function openList(type) {
+        currentCategory = type;
+        document.getElementById('main-menu').style.display = 'none';
+        document.getElementById('list-view').style.display = 'block';
+        document.getElementById('list-title').innerText = type + " Murojaatlari";
+        fetchData();
+    }
 
-                listDiv.innerHTML = ""; // Ro'yxatni tozalash
+    function goBack() {
+        document.getElementById('main-menu').style.display = 'block';
+        document.getElementById('list-view').style.display = 'none';
+    }
 
-                const keys = Object.keys(data).reverse(); // Yangilari tepada
+    async function fetchData() {
+        const res = await fetch(`${dbURL}/alerts.json`);
+        const data = await res.json();
+        
+        let counts = { SOS: 0, TEZ_YORDAM: 0 };
+        const container = document.getElementById('data-container');
+        if (document.getElementById('list-view').style.display === 'block') container.innerHTML = "";
 
-                for (let id of keys) {
-                    const alert = data[id];
-                    const card = document.createElement('div');
-                    card.className = 'alert-card';
-                    
-                    // Manzilni olish (Har bir karta uchun)
-                    const address = await getAddress(alert.lat, alert.lon);
+        if (data) {
+            Object.keys(data).reverse().forEach(id => {
+                const item = data[id];
+                counts[item.type]++;
 
-                    card.innerHTML = `
-                        <div class="alert-header">
-                            <span class="type-badge">${alert.type}</span>
-                            <span class="time">${alert.time}</span>
+                if (document.getElementById('list-view').style.display === 'block' && item.type === currentCategory) {
+                    const el = document.createElement('div');
+                    el.className = 'alert-item';
+                    el.style.borderColor = item.type === 'SOS' ? '#ff3b3b' : '#0a5cff';
+                    el.innerHTML = `
+                        <b>🕒 Vaqt: ${item.time}</b><br>
+                        <small>Koordinata: ${item.lat}, ${item.lon}</small>
+                        <div class="btn-group">
+                            <a href="https://www.google.com{item.lat},${item.lon}" target="_blank" class="btn btn-gmaps">📍 Google Maps</a>
+                            <button class="btn btn-chat" onclick="toggleChat('${id}')">💬 Chat</button>
                         </div>
-                        <div class="address-box">
-                            📍 <b>Manzil:</b> ${address}
-                        </div>
-                        <div style="font-size: 13px; color: #888;">
-                            Kenglik: ${alert.lat} | Uzunlik: ${alert.lon}
-                        </div>
-                        <div class="btn-box">
-                            <a href="https://www.google.com{alert.lat},${alert.lon}" target="_blank" class="btn">Xaritada ochish ➔</a>
+                        <div id="chat-${id}" class="chat-box">
+                            <input type="text" id="input-${id}" placeholder="Javob yozing...">
+                            <button onclick="sendChat('${id}')" style="width:25%; padding:8px;">Yuborish</button>
+                            <p id="reply-${id}" style="font-size:12px; color:green; margin-top:5px;">${item.reply || ""}</p>
                         </div>
                     `;
-                    listDiv.appendChild(card);
+                    container.appendChild(el);
                 }
-            } catch (e) {
-                console.error("Xatolik:", e);
-            }
+            });
         }
+        document.getElementById('count-SOS').innerText = counts.SOS;
+        document.getElementById('count-TEZ_YORDAM').innerText = counts.TEZ_YORDAM;
+    }
 
-        // Har 10 soniyada yangilab turadi (OpenStreetMap yukini kamaytirish uchun)
-        setInterval(fetchAlerts, 10000);
-        fetchAlerts();
-    </script>
+    function toggleChat(id) {
+        const box = document.getElementById(`chat-${id}`);
+        box.style.display = box.style.display === 'block' ? 'none' : 'block';
+    }
 
+    async function sendChat(id) {
+        const msg = document.getElementById(`input-${id}`).value;
+        if (!msg) return;
+        await fetch(`${dbURL}/alerts/${id}/reply.json`, { method: 'PUT', body: JSON.stringify(msg) });
+        document.getElementById(`reply-${id}`).innerText = "Javob yuborildi: " + msg;
+        document.getElementById(`input-${id}`).value = "";
+    }
+
+    setInterval(fetchData, 5000);
+    fetchData();
+</script>
 </body>
 </html>
