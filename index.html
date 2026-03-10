@@ -5,8 +5,8 @@
     <title>ADMIN | BEK_BOLA</title>
     <style>
         body { font-family: sans-serif; background: #0f172a; color: white; padding: 20px; }
-        .card { background: #1e293b; padding: 20px; border-radius: 15px; margin-bottom: 15px; border-left: 8px solid #ff3b3b; }
-        .btn { background: #22c55e; color: white; padding: 12px; border-radius: 10px; text-decoration: none; display: inline-block; font-weight: bold; margin-top: 10px; }
+        .card { background: #1e293b; padding: 20px; border-radius: 15px; margin-bottom: 10px; border-left: 10px solid #ef4444; }
+        .btn { background: #22c55e; color: white; padding: 12px 20px; border-radius: 10px; text-decoration: none; display: inline-block; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -14,29 +14,29 @@
     <div id="data">Yuklanmoqda...</div>
 
     <script>
-        const db = "https://bek-bola-default-rtdb.europe-west1.firebasedatabase.app";
+        const url = "https://bek-bola-default-rtdb.europe-west1.firebasedatabase.app";
 
-        async function load() {
-            const res = await fetch(db);
+        async function update() {
+            const res = await fetch(url);
             const data = await res.json();
             const box = document.getElementById('data');
             box.innerHTML = "";
 
             if(data) {
                 Object.keys(data).reverse().forEach(id => {
-                    const it = data[id];
+                    const item = data[id];
                     const div = document.createElement('div');
                     div.className = 'card';
-                    div.style.borderColor = it.type === 'SOS' ? '#ff3b3b' : '#0a5cff';
+                    div.style.borderColor = item.type === 'SOS' ? '#ef4444' : '#0a5cff';
                     div.innerHTML = `
-                        <b>Turi: ${it.type}</b> | Vaqt: ${it.time}<br>
-                        <a href="https://www.google.com{it.lat},${it.lon}" target="_blank" class="btn">📍 Google Mapsda ochish</a>
+                        <strong>Turi: ${item.type}</strong> | Vaqt: ${item.time}<br>
+                        <a href="https://www.google.com{item.lat},${item.lon}" target="_blank" class="btn">📍 Google Mapsda ochish</a>
                     `;
                     box.appendChild(div);
                 });
-            }
+            } else { box.innerHTML = "Hozircha xabarlar yo'q."; }
         }
-        setInterval(load, 5000); load();
+        setInterval(update, 5000); update();
     </script>
 </body>
 </html>
