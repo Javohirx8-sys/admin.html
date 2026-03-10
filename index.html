@@ -2,41 +2,111 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <title>ADMIN | BEK_BOLA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADMIN | Situatsion Markaz</title>
     <style>
-        body { font-family: sans-serif; background: #0f172a; color: white; padding: 20px; }
-        .card { background: #1e293b; padding: 20px; border-radius: 15px; margin-bottom: 10px; border-left: 10px solid #ef4444; }
-        .btn { background: #22c55e; color: white; padding: 12px 20px; border-radius: 10px; text-decoration: none; display: inline-block; font-weight: bold; margin-top: 10px; }
+        :root { --bg: #0f172a; --card: #1e293b; --red: #ef4444; --blue: #3b82f6; --text: #f1f5f9; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
+        header { background: var(--card); padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-bottom: 20px; }
+        .stats-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .stat-box { background: var(--card); padding: 15px; border-radius: 12px; text-align: center; border-bottom: 4px solid var(--red); }
+        .stat-box.blue { border-color: var(--blue); }
+        .stat-box h3 { margin: 0; font-size: 14px; opacity: 0.8; }
+        .stat-box span { font-size: 24px; font-weight: bold; }
+        
+        .alert-card { background: var(--card); padding: 20px; border-radius: 15px; margin-bottom: 15px; border-left: 8px solid var(--red); position: relative; animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        .alert-card.TEZ_YORDAM { border-left-color: var(--blue); }
+        
+        .btn-map { display: inline-block; background: #22c55e; color: white; padding: 12px 20px; border-radius: 10px; text-decoration: none; font-weight: bold; margin-top: 10px; transition: 0.3s; }
+        .btn-map:hover { background: #16a34a; transform: scale(1.02); }
+        .time { font-size: 13px; opacity: 0.6; margin-bottom: 5px; }
+        .type-label { font-weight: bold; font-size: 18px; display: block; margin-bottom: 5px; }
+        #data-container { min-height: 200px; }
+        .empty-msg { text-align: center; opacity: 0.5; margin-top: 50px; }
     </style>
 </head>
 <body>
-    <h1>🛰 BEK_BOLA Situatsion Markaz</h1>
-    <div id="data">Yuklanmoqda...</div>
 
-    <script>
-        const url = "https://bek-bola-default-rtdb.europe-west1.firebasedatabase.app";
+<header>
+    <h2 style="margin:0;">🛰 BEK_BOLA | Situatsion Markaz</h2>
+</header>
 
-        async function update() {
-            const res = await fetch(url);
-            const data = await res.json();
-            const box = document.getElementById('data');
-            box.innerHTML = "";
+<div class="stats-bar">
+    <div class="stat-box">
+        <h3>SOS</h3>
+        <span id="s-count">0</span>
+    </div>
+    <div class="stat-box blue">
+        <h3>TEZ YORDAM</h3>
+        <span id="a-count">0</span>
+    </div>
+</div>
 
-            if(data) {
-                Object.keys(data).reverse().forEach(id => {
-                    const item = data[id];
-                    const div = document.createElement('div');
-                    div.className = 'card';
-                    div.style.borderColor = item.type === 'SOS' ? '#ef4444' : '#0a5cff';
-                    div.innerHTML = `
-                        <strong>Turi: ${item.type}</strong> | Vaqt: ${item.time}<br>
-                        <a href="https://www.google.com{item.lat},${item.lon}" target="_blank" class="btn">📍 Google Mapsda ochish</a>
-                    `;
-                    box.appendChild(div);
-                });
-            } else { box.innerHTML = "Hozircha xabarlar yo'q."; }
+<div id="data-container">
+    <div class="empty-msg">Ma'lumotlar yuklanmoqda...</div>
+</div>
+
+<script>
+    // Firebase URL manzilingiz (Oxirida .json bo'lishi SHART!)
+    const FIREBASE_DB = "https://bek-bola-default-rtdb.europe-west1.firebasedatabase.app";
+
+    async function fetchData() {
+        try {
+            const response = await fetch(FIREBASE_DB);
+            const data = await response.json();
+            const container = document.getElementById('data-container');
+            
+            let sCount = 0;
+            let aCount = 0;
+
+            if (!data) {
+                container.innerHTML = "<div class='empty-msg'>Hozircha hech qanday murojaat yo'q.</div>";
+                document.getElementById('s-count').innerText = "0";
+                document.getElementById('a-count').innerText = "0";
+                return;
+            }
+
+            container.innerHTML = ""; // Tozalash
+
+            // Ma'lumotlarni teskari tartibda chiqarish (eng yangisi tepada)
+            const keys = Object.keys(data).reverse();
+
+            keys.forEach(id => {
+                const alert = data[id];
+                
+                // Sanash
+                if (alert.type === 'SOS') sCount++;
+                if (alert.type === 'TEZ_YORDAM') aCount++;
+
+                // Karta yaratish
+                const card = document.createElement('div');
+                card.className = `alert-card ${alert.type}`;
+                
+                card.innerHTML = `
+                    <div class="time">📅 ${alert.time}</div>
+                    <span class="type-label">${alert.type === 'SOS' ? '🆘 SOS' : '🚑 TEZ YORDAM'}</span>
+                    <div style="font-size: 14px; opacity: 0.9;">Koordinata: ${alert.lat}, ${alert.lon}</div>
+                    <a href="https://www.google.com{alert.lat},${alert.lon}" target="_blank" class="btn-map">📍 Google Mapsda ko'rish</a>
+                `;
+                container.appendChild(card);
+            });
+
+            document.getElementById('s-count').innerText = sCount;
+            document.getElementById('a-count').innerText = aCount;
+
+        } catch (error) {
+            console.error("Xatolik yuz berdi:", error);
+            document.getElementById('data-container').innerHTML = "<div class='empty-msg' style='color:red;'>Ulanishda xatolik! Internetni tekshiring.</div>";
         }
-        setInterval(update, 5000); update();
-    </script>
+    }
+
+    // Har 3 soniyada avtomatik yangilash
+    setInterval(fetchData, 3000);
+    
+    // Birinchi marta ishga tushirish
+    fetchData();
+</script>
+
 </body>
 </html>
