@@ -3,109 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SITUATSION MARKAZ | BEK_BOLA</title>
+    <title>ADMIN | Parkent Monitoring</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #020617; color: #f8fafc; }
-        .digital { font-family: 'Orbitron', sans-serif; }
-        .alert-card { animation: fadeInUp 0.4s ease-out; border-left-width: 10px; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        body { transition: 0.3s; -webkit-user-select: none; user-select: none; }
+        .filter-btn.active { background: #3b82f6; color: white; }
     </style>
 </head>
-<body class="p-4 md:p-10">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen p-4 md:p-10">
 
-    <div class="max-w-6xl mx-auto">
-        <header class="flex flex-col md:flex-row justify-between items-center bg-slate-900 p-8 rounded-[40px] border border-slate-800 shadow-2xl mb-10">
-            <div class="mb-6 md:mb-0 text-center md:text-left">
-                <h1 class="text-2xl font-black text-blue-500 tracking-[0.2em] uppercase digital">Situatsion Markaz</h1>
-                <p class="text-slate-500 text-xs mt-1 uppercase tracking-widest">Bek_Bola Monitoring Tizimi</p>
-            </div>
-            <div class="flex gap-6">
-                <div class="bg-slate-800 p-5 rounded-3xl text-center min-w-[120px] border border-slate-700">
-                    <p class="text-[10px] text-slate-500 uppercase mb-1">🆘 SOS</p>
-                    <p id="s-count" class="text-3xl font-bold text-red-500 digital">0</p>
-                </div>
-                <div class="bg-slate-800 p-5 rounded-3xl text-center min-w-[120px] border border-slate-700">
-                    <p class="text-[10px] text-slate-500 uppercase mb-1">🚑 AMBULANCE</p>
-                    <p id="a-count" class="text-3xl font-bold text-blue-500 digital">0</p>
-                </div>
-            </div>
-        </header>
-
-        <div id="display" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div class="col-span-full text-center py-20 text-slate-700 animate-pulse text-xl uppercase tracking-widest">Bog'lanish kutilmoqda...</div>
+    <header class="max-w-6xl mx-auto flex justify-between items-center bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-xl mb-8">
+        <div>
+            <h1 class="text-xl font-black uppercase tracking-tighter text-blue-600">Situatsion Markaz</h1>
+            <p class="text-[10px] font-bold opacity-50">Parkent Tuman Hokimligi</p>
         </div>
-    </div>
+        <div class="flex items-center gap-6">
+            <div id="admin-clock" class="font-mono font-bold text-lg hidden md:block">00:00:00</div>
+            <button onclick="document.documentElement.classList.toggle('dark')" class="p-3 bg-slate-100 dark:bg-slate-800 rounded-2xl">🌓</button>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto">
+        <div class="flex gap-2 mb-8 overflow-x-auto pb-2">
+            <button onclick="setFilter('ALL')" class="filter-btn active px-6 py-3 rounded-2xl font-bold bg-white dark:bg-slate-900 shadow-sm border dark:border-slate-800">BARCHASI</button>
+            <button onclick="setFilter('SOS')" class="filter-btn px-6 py-3 rounded-2xl font-bold bg-white dark:bg-slate-900 shadow-sm border dark:border-slate-800">SOS</button>
+            <button onclick="setFilter('TEZ_YORDAM')" class="filter-btn px-6 py-3 rounded-2xl font-bold bg-white dark:bg-slate-900 shadow-sm border dark:border-slate-800">TEZ YORDAM</button>
+        </div>
+
+        <div id="display" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </main>
+
+    <footer class="max-w-6xl mx-auto mt-20 border-t dark:border-slate-800 pt-10 pb-20">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="text-center md:text-left text-sm">
+                <b class="text-blue-600 uppercase">Loyihachi:</b> <span class="font-bold">Sizning Ismingiz</span><br>
+                <b class="text-blue-600 uppercase">Murojaat:</b> <span class="font-bold">+998 (XX) XXX-XX-XX</span>
+            </div>
+            <div class="text-center md:text-right">
+                <button onclick="alert('Tizim muammosi bo\'yicha adminga xabar yuborildi!')" class="bg-red-50 dark:bg-red-950 text-red-600 px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-widest border border-red-200 dark:border-red-900">Tizimda xatolik bormi? Murojaat qiling</button>
+                <p class="mt-4 text-[10px] opacity-40 uppercase font-black">2024-2025 BEK_BOLA © Parkent Smart City</p>
+            </div>
+        </div>
+    </footer>
 
     <script>
         const DB_URL = "https://bek-bola-default-rtdb.europe-west1.firebasedatabase.app/murojaatlar.json";
+        let currentFilter = 'ALL';
 
-        async function loadData() {
-            try {
-                const response = await fetch(DB_URL);
-                const data = await response.json();
-                const box = document.getElementById('display');
-                
-                let sCount = 0; let aCount = 0;
-
-                if (!data) {
-                    box.innerHTML = `<div class="col-span-full text-center py-20 opacity-30 text-xl italic font-light">Hozircha faol murojaatlar yo'q</div>`;
-                    document.getElementById('s-count').innerText = 0;
-                    document.getElementById('a-count').innerText = 0;
-                    return;
-                }
-
-                box.innerHTML = "";
-                // Eng yangi murojaat tepada bo'lishi uchun
-                const sortedKeys = Object.keys(data).sort((a, b) => (data[b].timestamp || 0) - (data[a].timestamp || 0));
-
-                sortedKeys.forEach(id => {
-                    const item = data[id];
-                    const isSOS = item.type === 'SOS';
-                    if (isSOS) sCount++; else aCount++;
-
-                    const card = document.createElement('div');
-                    card.className = `alert-card bg-slate-900 p-8 rounded-[35px] border-2 shadow-2xl relative overflow-hidden ${isSOS ? 'border-red-600' : 'border-blue-600'}`;
-                    
-                    card.innerHTML = `
-                        <div class="flex justify-between items-center mb-6">
-                            <span class="text-[10px] bg-slate-800 px-3 py-1 rounded-full text-slate-400 font-mono tracking-tighter">${item.time}</span>
-                            <button onclick="deleteMsg('${id}')" class="text-slate-600 hover:text-red-400 font-black transition-colors">O'CHIRISH</button>
-                        </div>
-                        <h2 class="text-3xl font-black mb-6 flex items-center gap-3">
-                            ${isSOS ? '🆘 SOS' : '🚑 TEZ YORDAM'}
-                        </h2>
-                        <div class="space-y-4">
-                            <div class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Koordinatalar:</div>
-                            <p class="text-xs font-mono text-slate-400 -mt-3">${item.lat}, ${item.lon}</p>
-                            <a href="https://www.google.com/maps?q=${item.lat},${item.lon}" target="_blank" 
-                               class="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl transition-all shadow-lg active:scale-95 uppercase tracking-tighter text-sm">
-                               📍 XARITADA KO'RISH
-                            </a>
-                        </div>
-                    `;
-                    box.appendChild(card);
-                });
-
-                document.getElementById('s-count').innerText = sCount;
-                document.getElementById('a-count').innerText = aCount;
-
-            } catch (error) {
-                console.error("Xatolik:", error);
-            }
-        }
-
-        async function deleteMsg(id) {
-            if(!confirm("Ushbu murojaatni arxivlamoqchimisiz?")) return;
-            const url = `https://bek-bola-default-rtdb.europe-west1.firebasedatabase.app/murojaatlar/${id}.json`;
-            await fetch(url, { method: 'DELETE' });
+        function setFilter(f) {
+            currentFilter = f;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
             loadData();
         }
 
-        // Har 5 soniyada yangilash
+        async function loadData() {
+            const res = await fetch(DB_URL);
+            const data = await res.json();
+            const box = document.getElementById('display');
+            box.innerHTML = "";
+
+            if (!data) return;
+
+            Object.keys(data).reverse().forEach(id => {
+                const item = data[id];
+                if (currentFilter !== 'ALL' && item.type !== currentFilter) return;
+
+                const card = document.createElement('div');
+                card.className = `bg-white dark:bg-slate-900 p-6 rounded-[30px] border-l-8 shadow-xl ${item.type === 'SOS' ? 'border-red-600' : 'border-blue-600'}`;
+                card.innerHTML = `
+                    <p class="text-[10px] opacity-50 font-bold mb-2 uppercase">${item.time}</p>
+                    <h3 class="text-xl font-black mb-4">${item.type}</h3>
+                    <a href="https://www.google.com/maps?q=${item.lat},${item.lon}" target="_blank" class="block text-center bg-blue-600 text-white py-3 rounded-2xl font-bold uppercase text-xs">Xaritada Ko'rish</a>
+                    <button onclick="deleteMsg('${id}')" class="w-full mt-2 text-[10px] font-bold opacity-30 hover:opacity-100">O'CHIRISH</button>
+                `;
+                box.appendChild(card);
+            });
+        }
+
+        setInterval(() => {
+            document.getElementById('admin-clock').innerText = new Date().toLocaleTimeString('uz-UZ');
+        }, 1000);
+
         setInterval(loadData, 5000);
         loadData();
+
+        async function deleteMsg(id) {
+            if(!confirm("O'chirilsinmi?")) return;
+            await fetch(`https://bek-bola-default-rtdb.europe-west1.firebasedatabase.app/murojaatlar/${id}.json`, { method: 'DELETE' });
+            loadData();
+        }
     </script>
 </body>
 </html>
