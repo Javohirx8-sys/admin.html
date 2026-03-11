@@ -5,40 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SITUATSION MARKAZ | BEK_BOLA</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #020617; color: #f8fafc; font-family: 'Inter', sans-serif; }
-        .digital-font { font-family: 'Orbitron', sans-serif; }
-        .alert-pulse { animation: border-pulse 2s infinite; }
-        @keyframes border-pulse {
-            0% { border-color: rgba(239, 68, 68, 0.5); }
-            50% { border-color: rgba(239, 68, 68, 1); }
-            100% { border-color: rgba(239, 68, 68, 0.5); }
-        }
+        body { background-color: #020617; color: #f8fafc; }
+        .alert-card { animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="p-4 md:p-8">
-
-    <div class="max-w-6xl mx-auto">
-        <div class="flex flex-col md:flex-row justify-between items-center bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-2xl mb-8">
-            <div class="text-center md:text-left mb-4 md:mb-0">
-                <h1 class="text-2xl font-black text-blue-500 tracking-widest uppercase digital-font">Situatsion Markaz</h1>
-                <p class="text-slate-400 text-sm">Parkent tumani favqulodda monitoring tizimi</p>
+<body class="p-4 md:p-10">
+    <div class="max-w-5xl mx-auto">
+        <header class="flex justify-between items-center bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-2xl mb-8">
+            <div>
+                <h1 class="text-2xl font-black text-blue-500 tracking-tighter uppercase">Situatsion Markaz</h1>
+                <p class="text-slate-500 text-xs">Parkent Monitoring Tizimi</p>
             </div>
             <div class="flex gap-4">
-                <div class="bg-slate-800 p-4 rounded-2xl text-center min-w-[100px]">
-                    <p class="text-xs text-slate-500 uppercase">🆘 SOS</p>
-                    <p id="s-count" class="text-2xl font-bold text-red-500 digital-font">0</p>
+                <div class="bg-slate-800 px-4 py-2 rounded-xl text-center">
+                    <p class="text-[10px] text-slate-500 uppercase">SOS</p>
+                    <p id="s-count" class="text-xl font-bold text-red-500">0</p>
                 </div>
-                <div class="bg-slate-800 p-4 rounded-2xl text-center min-w-[100px]">
-                    <p class="text-xs text-slate-500 uppercase">🚑 TEZ YORDAM</p>
-                    <p id="a-count" class="text-2xl font-bold text-blue-500 digital-font">0</p>
+                <div class="bg-slate-800 px-4 py-2 rounded-xl text-center">
+                    <p class="text-[10px] text-slate-500 uppercase">Tez yordam</p>
+                    <p id="a-count" class="text-xl font-bold text-blue-500">0</p>
                 </div>
             </div>
-        </div>
+        </header>
 
-        <div id="display" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            </div>
+        <div id="display" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <p class="col-span-full text-center py-20 text-slate-600 animate-pulse">Ma'lumotlar yuklanmoqda...</p>
+        </div>
     </div>
 
     <script>
@@ -51,9 +45,8 @@
                 const box = document.getElementById('display');
                 
                 let sCount = 0; let aCount = 0;
-
                 if (!data) {
-                    box.innerHTML = `<div class="col-span-full text-center py-20 opacity-20 text-2xl uppercase tracking-widest">Hozircha murojaatlar yo'q</div>`;
+                    box.innerHTML = "<div class='col-span-full text-center text-slate-700 py-10'>Hozircha murojaatlar yo'q</div>";
                     document.getElementById('s-count').innerText = 0;
                     document.getElementById('a-count').innerText = 0;
                     return;
@@ -64,41 +57,30 @@
                     const item = data[id];
                     if (item.type === 'SOS') sCount++; else aCount++;
 
-                    const isSOS = item.type === 'SOS';
-                    const card = document.createElement('div');
-                    card.className = `bg-slate-900 p-6 rounded-3xl border-2 ${isSOS ? 'border-red-600 alert-pulse shadow-[0_0_20px_rgba(239,68,68,0.2)]' : 'border-blue-600 shadow-[0_0_20px_rgba(37,99,235,0.2)]'}`;
-                    
-                    card.innerHTML = `
+                    const div = document.createElement('div');
+                    div.className = `alert-card bg-slate-900 p-6 rounded-3xl border-2 shadow-2xl ${item.type === 'SOS' ? 'border-red-600' : 'border-blue-600'}`;
+                    div.innerHTML = `
                         <div class="flex justify-between items-start mb-4">
-                            <span class="text-[10px] bg-slate-800 px-2 py-1 rounded-full text-slate-400 font-mono italic">${item.time}</span>
-                            <button onclick="deleteItem('${id}')" class="text-slate-600 hover:text-red-400 transition-colors text-xl">&times;</button>
+                            <span class="text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400 font-mono">${item.time}</span>
+                            <button onclick="deleteMsg('${id}')" class="text-slate-600 hover:text-red-500 font-bold">O'CHIRISH</button>
                         </div>
-                        <h2 class="text-2xl font-black mb-2 flex items-center gap-2">
-                            ${isSOS ? '🆘 SOS' : '🚑 TEZ YORDAM'}
-                        </h2>
-                        <div class="space-y-3">
-                            <p class="text-sm text-slate-400">Holati: <span class="text-green-400 font-bold">Faol</span></p>
-                            <a href="https://www.google.com/maps?q=${item.lat},${item.lon}" target="_blank" 
-                               class="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg active:scale-95">
-                               📍 XARITADA KO'RISH
-                            </a>
-                        </div>
+                        <h2 class="text-2xl font-black mb-4">${item.type === 'SOS' ? '🆘 SOS HABARI' : '🚑 TEZ YORDAM'}</h2>
+                        <a href="https://www.google.com/maps?q=${item.lat},${item.lon}" target="_blank" 
+                           class="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition-all shadow-lg active:scale-95">
+                           📍 XARITADA KO'RISH
+                        </a>
                     `;
-                    box.appendChild(card);
+                    box.appendChild(div);
                 });
 
                 document.getElementById('s-count').innerText = sCount;
                 document.getElementById('a-count').innerText = aCount;
-
-            } catch (error) {
-                console.error("Xatolik:", error);
-            }
+            } catch (e) { console.error(e); }
         }
 
-        async function deleteItem(id) {
-            if(!confirm("Murojaatni o'chirmoqchimisiz?")) return;
-            const deleteUrl = `https://bek-bola-default-rtdb.europe-west1.firebasedatabase.app/murojaatlar/${id}.json`;
-            await fetch(deleteUrl, { method: 'DELETE' });
+        async function deleteMsg(id) {
+            if(!confirm("Ushbu murojaatni o'chirib tashlaysizmi?")) return;
+            await fetch(`https://bek-bola-default-rtdb.europe-west1.firebasedatabase.app/murojaatlar/${id}.json`, { method: 'DELETE' });
             loadData();
         }
 
